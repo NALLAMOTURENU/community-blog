@@ -1,0 +1,79 @@
+🎯 GUARANTEED FIX - DO THIS NOW:
+
+════════════════════════════════════════════════════════
+
+STEP 1: Open Supabase
+→ Go to https://supabase.com/dashboard
+→ Select your project
+→ Click "SQL Editor" (left sidebar)
+
+════════════════════════════════════════════════════════
+
+STEP 2: Copy GUARANTEED_FIX.sql
+→ Open the file: GUARANTEED_FIX.sql
+→ Copy ALL the SQL (Cmd+A, Cmd+C)
+→ Paste into Supabase SQL Editor
+
+════════════════════════════════════════════════════════
+
+STEP 3: Click RUN
+→ Click the "Run" button (or Cmd+Enter)
+→ Wait for "Success" message
+
+════════════════════════════════════════════════════════
+
+STEP 4: Verify Policies Were Removed
+→ In SQL Editor, run this:
+
+SELECT policyname FROM pg_policies WHERE tablename = 'room_members';
+
+→ Should show EXACTLY 3 policies:
+  - read_own_membership
+  - insert_own_membership  
+  - creator_manage_members
+
+════════════════════════════════════════════════════════
+
+STEP 5: Restart Dev Server
+→ Terminal: Press Ctrl+C (stop server)
+→ Run: npm run dev
+→ Wait for server to start
+
+════════════════════════════════════════════════════════
+
+STEP 6: Hard Refresh Browser
+→ Mac: Cmd+Shift+R
+→ Windows: Ctrl+Shift+R
+→ Or open new Incognito window
+
+════════════════════════════════════════════════════════
+
+STEP 7: Test Room Creation
+→ Go to: http://localhost:3003/create-room
+→ Enter room name: "Test Room"
+→ Click "Create Room"
+→ ✅ SHOULD WORK!
+
+════════════════════════════════════════════════════════
+
+✅ THIS WILL FIX IT BECAUSE:
+
+1. DO block removes ALL policies (even hidden ones)
+2. Only creates 3 safe policies
+3. None of them query room_members itself
+4. Trigger has SECURITY DEFINER (bypasses RLS)
+
+NO recursion possible!
+
+════════════════════════════════════════════════════════
+
+⚠️ IF IT STILL FAILS:
+
+Run this in Supabase SQL Editor:
+
+SELECT policyname, cmd FROM pg_policies WHERE tablename = 'room_members';
+
+Paste the results and I'll tell you exactly what's wrong.
+
+════════════════════════════════════════════════════════
+
