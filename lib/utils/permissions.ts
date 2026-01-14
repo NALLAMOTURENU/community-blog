@@ -17,6 +17,9 @@ export async function isRoomMember(
     .eq('user_id', userId)
     .single<Pick<Tables<'room_members'>, 'id'>>()
 
+  return !error && !!data
+}
+
 /**
  * Check if user is an admin of a room
  */
@@ -34,6 +37,9 @@ export async function isRoomAdmin(
     .eq('role', 'admin')
     .single<Pick<Tables<'room_members'>, 'role'>>()
 
+  return !error && !!data
+}
+
 /**
  * Check if user is the creator of a room
  */
@@ -49,6 +55,9 @@ export async function isRoomCreator(
     .eq('id', roomId)
     .eq('created_by', userId)
     .single<Pick<Tables<'rooms'>, 'created_by'>>()
+
+  return !error && !!data
+}
 
 /**
  * Check if user can write in a room
@@ -75,6 +84,9 @@ export async function isBlogAuthor(
     .eq('id', blogId)
     .eq('author_id', userId)
     .single<Pick<Tables<'blogs'>, 'author_id'>>()
+
+  return !error && !!data
+}
 
 /**
  * Check if user can edit a blog
@@ -116,5 +128,3 @@ export async function getUserRoomRole(
   if (error || !data) return null
   return data.role as 'admin' | 'member'
 }
-
-
