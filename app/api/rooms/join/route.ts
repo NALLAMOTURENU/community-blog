@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
     // Add user as member
     const { error: memberError } = await supabase
       .from('room_members')
+      // @ts-expect-error - Supabase type inference issue with insert in strict mode
       .insert({
         room_id: room.id,
         user_id: user.id,

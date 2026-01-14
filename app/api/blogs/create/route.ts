@@ -105,6 +105,7 @@ export async function POST(request: NextRequest) {
     // Create blog metadata in Supabase
     const { data: blog, error: blogError } = await supabase
       .from('blogs')
+      // @ts-expect-error - Supabase type inference issue with insert in strict mode
       .insert({
         room_id: roomId,
         author_id: user.id,
