@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { Tables } from '@/types/supabase'
 
 /**
  * Check if user is a member of a room
@@ -14,10 +15,7 @@ export async function isRoomMember(
     .select('id')
     .eq('room_id', roomId)
     .eq('user_id', userId)
-    .single()
-
-  return !error && !!data
-}
+    .single<Pick<Tables<'room_members'>, 'id'>>()
 
 /**
  * Check if user is an admin of a room
@@ -34,10 +32,7 @@ export async function isRoomAdmin(
     .eq('room_id', roomId)
     .eq('user_id', userId)
     .eq('role', 'admin')
-    .single()
-
-  return !error && !!data
-}
+    .single<Pick<Tables<'room_members'>, 'role'>>()
 
 /**
  * Check if user is the creator of a room
@@ -53,10 +48,7 @@ export async function isRoomCreator(
     .select('created_by')
     .eq('id', roomId)
     .eq('created_by', userId)
-    .single()
-
-  return !error && !!data
-}
+    .single<Pick<Tables<'rooms'>, 'created_by'>>()
 
 /**
  * Check if user can write in a room
@@ -82,10 +74,7 @@ export async function isBlogAuthor(
     .select('author_id')
     .eq('id', blogId)
     .eq('author_id', userId)
-    .single()
-
-  return !error && !!data
-}
+    .single<Pick<Tables<'blogs'>, 'author_id'>>()
 
 /**
  * Check if user can edit a blog
@@ -100,7 +89,7 @@ export async function canEditBlog(
     .from('blogs')
     .select('author_id, published')
     .eq('id', blogId)
-    .single()
+    .single<Pick<Tables<'blogs'>, 'author_id' | 'published'>>()
 
   if (error || !data) return false
 
@@ -122,7 +111,7 @@ export async function getUserRoomRole(
     .select('role')
     .eq('room_id', roomId)
     .eq('user_id', userId)
-    .single()
+    .single<Pick<Tables<'room_members'>, 'role'>>()
 
   if (error || !data) return null
   return data.role as 'admin' | 'member'
