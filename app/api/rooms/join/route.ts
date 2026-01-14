@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { isValidJoinCode } from '@/lib/utils/join-code'
+import { Tables } from '@/types/supabase'
 import { z } from 'zod'
 
 const joinRoomSchema = z.object({
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
       .from('rooms')
       .select('id, name, slug')
       .eq('join_code', joinCode)
-      .single()
+      .single<Pick<Tables<'rooms'>, 'id' | 'name' | 'slug'>>()
 
     if (roomError || !room) {
       return NextResponse.json(
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
       .select('id')
       .eq('room_id', room.id)
       .eq('user_id', user.id)
-      .single()
+      .single<Pick<Tables<'room_members'>, 'id'>>()
 
     if (existingMember) {
       return NextResponse.json(
