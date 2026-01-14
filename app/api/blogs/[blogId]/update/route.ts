@@ -94,6 +94,7 @@ export async function PATCH(
     if (Object.keys(supabaseUpdates).length > 0) {
       const { data: updatedBlog, error: updateError } = await supabase
         .from('blogs')
+        // @ts-expect-error - Supabase type inference issue with update
         .update(supabaseUpdates)
         .eq('id', blogId)
         .select()
