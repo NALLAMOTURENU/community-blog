@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateSlug } from '@/lib/utils/slug'
+import { Tables, TablesInsert } from '@/types/supabase'
 import { z } from 'zod'
 
 const createRoomSchema = z.object({
@@ -46,6 +47,7 @@ export async function POST(request: NextRequest) {
       .from('rooms')
       .select('slug')
       .like('slug', `${baseSlug}%`)
+      .returns<Pick<Tables<'rooms'>, 'slug'>[]>()
 
     const existingSlugs = existingRooms?.map((r) => r.slug) || []
 
@@ -102,6 +104,7 @@ export async function POST(request: NextRequest) {
 
     const { data: room, error: roomError } = await supabase
       .from('rooms')
+      // @ts-expect-error - Supabase type inference issue with insert
       .insert({
         name,
         slug,
@@ -110,7 +113,7 @@ export async function POST(request: NextRequest) {
         created_by: user.id,
       })
       .select()
-      .single()
+      .single<Tables<'rooms'>>()
 
     if (roomError) {
       console.error('Error creating room:', roomError)

@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sanityClient } from '@/lib/sanity/config'
 import { canEditBlog } from '@/lib/utils/permissions'
+import { Tables, TablesUpdate } from '@/types/supabase'
 import { z } from 'zod'
-import type { Database } from '@/types/supabase'
+
+// Type alias for Blog table
+type Blog = Tables<'blogs'>
 
 const updateBlogSchema = z.object({
   title: z.string().min(3).max(200).optional(),
@@ -56,13 +59,11 @@ export async function PATCH(
       .from('blogs')
       .select('sanity_id, title')
       .eq('id', blogId)
-      .single()
+      .single<Pick<Blog, 'sanity_id' | 'title'>>()
 
     if (blogError || !blog) {
       return NextResponse.json({ error: 'Blog not found' }, { status: 404 })
     }
-
-    const blogData = blog as any
 
     // Update content in Sanity
     if (updates.content || updates.title || updates.excerpt !== undefined) {
@@ -73,7 +74,7 @@ export async function PATCH(
         if (updates.excerpt !== undefined) sanityUpdates.excerpt = updates.excerpt
 
         await sanityClient
-          .patch(blogData.sanity_id)
+          .patch(blog.sanity_id)
           .set(sanityUpdates)
           .commit()
       } catch (sanityError) {
@@ -86,18 +87,17 @@ export async function PATCH(
     }
 
     // Update metadata in Supabase
-    const supabaseUpdates: Database['public']['Tables']['blogs']['Update'] = {}
+    const supabaseUpdates: TablesUpdate<'blogs'> = {}
     if (updates.title) supabaseUpdates.title = updates.title
     if (updates.excerpt !== undefined) supabaseUpdates.excerpt = updates.excerpt || null
 
     if (Object.keys(supabaseUpdates).length > 0) {
-      // @ts-expect-error - Supabase types are overly strict here, but the update object is correctly typed
       const { data: updatedBlog, error: updateError } = await supabase
         .from('blogs')
         .update(supabaseUpdates)
         .eq('id', blogId)
         .select()
-        .single()
+        .single<Blog>()
 
       if (updateError) {
         console.error('Error updating blog:', updateError)

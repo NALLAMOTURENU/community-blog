@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { Tables } from '@/types/supabase'
+
+// Type alias for Room table
+type Room = Tables<'rooms'>
 
 export async function GET(
   request: NextRequest,
@@ -13,7 +17,7 @@ export async function GET(
       .from('rooms')
       .select('*')
       .eq('slug', roomSlug)
-      .single()
+      .single<Room>()
 
     if (error || !room) {
       return NextResponse.json({ error: 'Room not found' }, { status: 404 })

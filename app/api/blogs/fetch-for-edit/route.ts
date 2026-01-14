@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sanityClientPublic } from '@/lib/sanity/config'
+import { Tables } from '@/types/supabase'
+
+// Type aliases for database tables
+type Room = Tables<'rooms'>
+type Blog = Tables<'blogs'>
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,7 +33,7 @@ export async function GET(request: NextRequest) {
       .from('rooms')
       .select('id')
       .eq('slug', roomSlug)
-      .single()
+      .single<Pick<Room, 'id'>>()
 
     if (!room) {
       return NextResponse.json({ error: 'Room not found' }, { status: 404 })
@@ -40,7 +45,7 @@ export async function GET(request: NextRequest) {
       .select('*')
       .eq('room_id', room.id)
       .eq('slug', blogSlug)
-      .single()
+      .single<Blog>()
 
     if (blogError || !blog) {
       return NextResponse.json({ error: 'Blog not found' }, { status: 404 })

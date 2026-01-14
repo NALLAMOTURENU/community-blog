@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { formatJoinCode } from '@/lib/utils/join-code'
-import { Users, Key, Calendar } from 'lucide-react'
+import { Users, Key, Calendar, ChevronRight } from 'lucide-react'
 
 interface PeoplePageProps {
   params: Promise<{ roomSlug: string }>
@@ -83,16 +84,17 @@ export default async function PeoplePage({ params }: PeoplePageProps) {
         ) : (
           <div className="space-y-3">
             {members.map((member: any) => (
-              <div
+              <Link
                 key={member.id}
-                className="flex items-center justify-between p-4 bg-neutral-900/50 border border-white/5 rounded-lg hover:border-white/10 transition-colors"
+                href={`/${roomSlug}/member/${member.user_id}`}
+                className="flex items-center justify-between p-4 bg-neutral-900/50 border border-white/5 rounded-lg hover:border-indigo-500/30 hover:bg-neutral-900/70 transition-all group cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
                     {member.username.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-medium text-white">{member.username}</p>
+                    <p className="font-medium text-white group-hover:text-indigo-400 transition-colors">{member.username}</p>
                     <p className="text-sm text-neutral-400">{member.email}</p>
                   </div>
                 </div>
@@ -106,20 +108,21 @@ export default async function PeoplePage({ params }: PeoplePageProps) {
                     <Calendar size={12} strokeWidth={1.5} />
                     {new Date(member.joined_at).toLocaleDateString()}
                   </div>
+                  <ChevronRight size={16} strokeWidth={1.5} className="text-neutral-600 group-hover:text-indigo-400 transition-colors" />
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
       </div>
 
-      {/* Blogs Section Preview */}
+      {/* Info Card */}
       <div className="glass-card rounded-xl p-6 text-center">
-        <p className="text-neutral-400 text-sm mb-3">
-          Want to see what this room has created?
+        <p className="text-neutral-400 text-sm mb-2">
+          💡 Click on any member to view their blogs in this room
         </p>
         <p className="text-xs text-neutral-500">
-          Blog browsing feature coming soon! For now, use the Write Blog tab to create content.
+          You can also browse all blogs in the "Blogs" tab
         </p>
       </div>
     </div>

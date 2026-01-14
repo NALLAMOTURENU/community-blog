@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { isRoomMember } from '@/lib/utils/permissions'
+import { Tables } from '@/types/supabase'
 
 export async function GET(
   request: NextRequest,
@@ -25,7 +26,7 @@ export async function GET(
       .from('rooms')
       .select('id, name, slug')
       .eq('slug', roomSlug)
-      .single()
+      .single<Pick<Tables<'rooms'>, 'id' | 'name' | 'slug'>>()
 
     if (roomError || !room) {
       return NextResponse.json({ error: 'Room not found' }, { status: 404 })
@@ -43,6 +44,7 @@ export async function GET(
       .select('*')
       .eq('room_id', room.id)
       .order('joined_at', { ascending: true })
+      .returns<Tables<'room_members_with_profiles'>[]>()
 
     if (membersError) {
       console.error('Error fetching members:', membersError)

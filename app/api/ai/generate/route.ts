@@ -92,9 +92,9 @@ Create well-structured, engaging content with proper headings and paragraphs.`
       userPrompt = `Context/Topic: ${context}\n\nGenerate a complete blog post about this topic.`
     }
 
-    // Call Gemini API (use v1beta endpoint with gemini-1.5-flash)
+    // Call Gemini API (use v1beta endpoint with gemini-2.5-flash)
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: {

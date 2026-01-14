@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sanityClient } from '@/lib/sanity/config'
+import { Tables, TablesUpdate } from '@/types/supabase'
 import { z } from 'zod'
+
+// Type alias for Blog table
+type Blog = Tables<'blogs'>
+type BlogUpdate = TablesUpdate<'blogs'>
 
 const editBlogSchema = z.object({
   title: z.string().min(3).max(200),
@@ -48,7 +53,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       .from('blogs')
       .select('author_id, sanity_id, room_id')
       .eq('id', blogId)
-      .single()
+      .single<Pick<Blog, 'author_id' | 'sanity_id' | 'room_id'>>()
 
     if (blogError || !blog) {
       return NextResponse.json({ error: 'Blog not found' }, { status: 404 })
@@ -68,7 +73,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       .select('id')
       .eq('room_id', blog.room_id)
       .eq('user_id', user.id)
-      .single()
+      .single<Pick<Tables<'room_members'>, 'id'>>()
 
     if (!membership) {
       return NextResponse.json(
@@ -96,8 +101,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     // Update metadata in Supabase (title, excerpt, updated_at)
-    const { data: updatedBlog, error: updateError } = await supabase
+    const updateResult = await supabase
       .from('blogs')
+      // @ts-expect-error - Supabase type inference issue with update
       .update({
         title,
         excerpt: excerpt || null,
@@ -106,6 +112,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       .eq('id', blogId)
       .select()
       .single()
+    
+    const updatedBlog = updateResult.data as Blog | null
+    const updateError = updateResult.error
 
     if (updateError) {
       console.error('Error updating blog metadata:', updateError)

@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sanityClient } from '@/lib/sanity/config'
 import { canEditBlog, isBlogAuthor } from '@/lib/utils/permissions'
+import { Tables } from '@/types/supabase'
 import { nanoid } from 'nanoid'
+
+// Type alias for Blog table
+type Blog = Tables<'blogs'>
 
 export async function POST(
   request: NextRequest,
@@ -27,13 +31,11 @@ export async function POST(
       .from('blogs')
       .select('*')
       .eq('id', blogId)
-      .single()
+      .single<Blog>()
 
     if (blogError || !blog) {
       return NextResponse.json({ error: 'Blog not found' }, { status: 404 })
     }
-
-    const blogData = blog as any
 
     // Check if user is the author
     const isAuthor = await isBlogAuthor(blogId, user.id)
@@ -45,7 +47,7 @@ export async function POST(
     }
 
     // Check if already published
-    if (blogData.published) {
+    if (blog.published) {
       return NextResponse.json(
         { error: 'Blog is already published' },
         { status: 400 }
@@ -53,7 +55,7 @@ export async function POST(
     }
 
     // Get the draft content from Sanity
-    const draftDoc = await sanityClient.getDocument(blogData.sanity_id)
+    const draftDoc = await sanityClient.getDocument(blog.sanity_id)
     
     if (!draftDoc) {
       return NextResponse.json(
@@ -63,7 +65,7 @@ export async function POST(
     }
 
     // Create a new published document in Sanity (remove draft prefix)
-    const publishedId = blogData.sanity_id.replace('draft-', 'published-')
+    const publishedId = blog.sanity_id.replace('draft-', 'published-')
     
     try {
       // Create published version
@@ -74,7 +76,7 @@ export async function POST(
       })
 
       // Delete draft version
-      await sanityClient.delete(blogData.sanity_id)
+      await sanityClient.delete(blog.sanity_id)
     } catch (sanityError) {
       console.error('Error publishing in Sanity:', sanityError)
       return NextResponse.json(
@@ -84,21 +86,21 @@ export async function POST(
     }
 
     // Update blog in Supabase
-    const updateData: any = {
-      published: true,
-      published_at: new Date().toISOString(),
-      sanity_id: publishedId,
-    }
-    const { data: updatedBlog, error: updateError } = await (supabase as any)
+    const { data: updatedBlog, error: updateError } = await supabase
       .from('blogs')
-      .update(updateData)
+      // @ts-expect-error - Supabase type inference issue with update
+      .update({
+        published: true,
+        published_at: new Date().toISOString(),
+        sanity_id: publishedId,
+      })
       .eq('id', blogId)
       .select()
-      .single()
+      .single<Blog>()
 
     if (updateError) {
       // Rollback: Restore draft in Sanity
-      await sanityClient.create({ ...draftDoc, _id: blogData.sanity_id })
+      await sanityClient.create({ ...draftDoc, _id: blog.sanity_id })
       await sanityClient.delete(publishedId)
       
       console.error('Error updating blog:', updateError)

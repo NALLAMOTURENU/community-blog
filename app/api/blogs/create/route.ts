@@ -3,8 +3,13 @@ import { createClient } from '@/lib/supabase/server'
 import { sanityClient } from '@/lib/sanity/config'
 import { generateSlug, generateUniqueSlug } from '@/lib/utils/slug'
 import { canWriteInRoom } from '@/lib/utils/permissions'
+import { Tables } from '@/types/supabase'
 import { z } from 'zod'
 import { nanoid } from 'nanoid'
+
+// Type aliases for database tables
+type Room = Tables<'rooms'>
+type Blog = Tables<'blogs'>
 
 const createBlogSchema = z.object({
   roomId: z.string().uuid(),
@@ -56,7 +61,7 @@ export async function POST(request: NextRequest) {
       .from('rooms')
       .select('slug')
       .eq('id', roomId)
-      .single()
+      .single<Pick<Room, 'slug'>>()
 
     if (roomError || !room) {
       return NextResponse.json({ error: 'Room not found' }, { status: 404 })
@@ -68,6 +73,7 @@ export async function POST(request: NextRequest) {
       .from('blogs')
       .select('slug')
       .eq('room_id', roomId)
+      .returns<Pick<Blog, 'slug'>[]>()
 
     const existingSlugs = existingBlogs?.map((b) => b.slug) || []
     const slug = generateUniqueSlug(title, existingSlugs)
@@ -109,7 +115,7 @@ export async function POST(request: NextRequest) {
         published: false,
       })
       .select()
-      .single()
+      .single<Blog>()
 
     if (blogError) {
       // Rollback: Delete Sanity document

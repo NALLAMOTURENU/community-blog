@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { formatJoinCode } from '@/lib/utils/join-code'
 import { Plus, LogIn as LoginIcon, LogOut, Home, MessageSquare } from 'lucide-react'
 import { AmbientBackground } from '@/components/ui/ambient-background'
+import { Tables } from '@/types/supabase'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -21,9 +22,23 @@ export default async function DashboardPage() {
     .from('profiles')
     .select('username')
     .eq('id', user.id)
-    .single()
+    .single<Pick<Tables<'profiles'>, 'username'>>()
 
   // Get user's rooms
+  type MembershipWithRoom = {
+    room_id: string
+    role: string
+    joined_at: string | null
+    rooms: {
+      id: string
+      name: string
+      slug: string
+      join_code: string
+      description: string | null
+      created_at: string | null
+    } | null
+  }
+
   const { data: memberships } = await supabase
     .from('room_members')
     .select(`
@@ -41,11 +56,12 @@ export default async function DashboardPage() {
     `)
     .eq('user_id', user.id)
     .order('joined_at', { ascending: false })
+    .returns<MembershipWithRoom[]>()
 
   const rooms = memberships?.map(m => ({
     ...m.rooms,
     role: m.role,
-  })) || []
+  })).filter(room => room.id) || []
 
   return (
     <div className="min-h-screen bg-neutral-950 relative">
